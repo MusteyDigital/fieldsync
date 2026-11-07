@@ -2,6 +2,8 @@
 
 Offline-first field data collector PWA. Capture records with no network, and they sync automatically when the connection returns.
 
+**Live demo:** https://fieldsync-chi.vercel.app (dashboard: [/admin](https://fieldsync-chi.vercel.app/admin))
+
 ![Offline queue](docs/offline.png)
 
 ## Why
