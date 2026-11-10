@@ -16,7 +16,7 @@ Field teams (surveyors, inspectors, agents) often work where connectivity is poo
 - **Queue:** unsynced records are flagged and retried on reconnect and every 15 seconds.
 - **Idempotent sync:** the API uses `INSERT ... ON CONFLICT (id) DO NOTHING`, so retries and double sends never create duplicates.
 - **Installable:** a service worker caches the app shell, so it loads with no network and installs as a standalone app.
-- **Live dashboard:** `/admin` polls the API and shows when each record was captured vs when it arrived.
+- **Live dashboard:** `/admin` is passcode-protected (httpOnly cookie) and polls the API to show when each record was captured vs when it arrived.
 
 ![Live dashboard](docs/dashboard.png)
 
@@ -33,6 +33,7 @@ npm install
 createdb fieldsync
 psql fieldsync -f db/schema.sql
 echo 'DATABASE_URL=postgres://postgres:postgres@localhost:5432/fieldsync' > .env.local
+echo "ADMIN_PASSCODE=choose-a-passcode" >> .env.local
 npm run build && npm start
 ```
 
