@@ -14,15 +14,26 @@ type Row = {
 
 export default function Admin() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const [seen] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let first = true;
+    let t: ReturnType<typeof setInterval> | undefined;
     const load = async () => {
       try {
         const r = await fetch("/api/records", { cache: "no-store" });
+        if (r.status === 401) {
+          setAuthed(false);
+          clearInterval(t);
+          return;
+        }
         const data: Row[] = (await r.json()).records;
+        setAuthed(true);
         const incoming = data.filter((x) => !seen.has(x.id)).map((x) => x.id);
         data.forEach((x) => seen.add(x.id));
         setRows(data);
@@ -34,9 +45,50 @@ export default function Admin() {
       } catch {}
     };
     load();
-    const t = setInterval(load, 2000);
+    t = setInterval(load, 2000);
     return () => clearInterval(t);
-  }, [seen]);
+  }, [attempt, seen]);
+
+  async function login(e: React.FormEvent) {
+    e.preventDefault();
+    setErr("");
+    const r = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passcode: pass }),
+    });
+    if (r.ok) {
+      setPass("");
+      setAuthed(null);
+      setAttempt((n) => n + 1);
+    } else {
+      setErr("Wrong passcode");
+    }
+  }
+
+  if (authed === null) {
+    return <main className="p-6 text-gray-400">Loading...</main>;
+  }
+
+  if (authed === false) {
+    return (
+      <main className="mx-auto max-w-sm space-y-3 p-6">
+        <h1 className="text-2xl font-bold">Admin</h1>
+        <form onSubmit={login} className="space-y-2">
+          <input
+            type="password"
+            autoFocus
+            className="w-full rounded border border-gray-400 bg-white p-2 text-black placeholder-gray-500"
+            placeholder="Passcode"
+            value={pass}
+            onChange={(e) => setPass(e.target.value)}
+          />
+          <button className="w-full rounded bg-blue-600 p-2 text-white">Sign in</button>
+        </form>
+        {err && <p className="text-sm text-red-500">{err}</p>}
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-5xl p-6">

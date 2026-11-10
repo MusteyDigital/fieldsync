@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { pool } from "@/lib/server-db";
+import { isAdmin } from "@/lib/admin-auth";
 
 const Rec = z.object({
   id: z.string().uuid(),
@@ -31,6 +32,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { rows } = await pool.query(
     `SELECT id, device_id, title, notes, lat, lng, created_at, synced_at
      FROM records ORDER BY synced_at DESC LIMIT 100`
